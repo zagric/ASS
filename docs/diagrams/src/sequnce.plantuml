@@ -1,0 +1,45 @@
+@startuml
+	!pragma teoz true
+
+	skinparam ActorStyle awesome
+	skinparam ResponseMessageBelowArrow true
+	scale 2
+
+	actor 		"Подразделение\n(Источник, ИБ)"	as source #Gray
+	boundary	"ПТК\n(Диспетчер)"							as ptk #IndianRed
+	queue			"Буфер\n(Д1ОЗ3)"								as buffer #LightGreen
+	entity		"Диспетчер\n(Прибор, П31)"			as worker
+	database	"Результат\n(ОР1, ОД1)"					as db #SkyBlue
+
+	source	-> ptk++:			Отправляет заявку
+	break источник отзывает заявку
+		source	<-- ptk:		Отказ в обработке заявки
+	end
+	ptk			-> ptk:				Определение приоритета\nзаявки по источнику
+	ptk			-> buffer++:	Передача заявки
+	buffer	-> buffer:		Проверка места в буфере
+	alt буфер свободен
+		ptk			<-- buffer:	Подтверждение постановки\nзаявки в очередь
+		&source	<-- ptk:		Подтверждение принятия\nзаявки в обработку
+	else буфер переполнен
+		buffer	-> buffer:	Поиск заявки с наименьшим\nприоритетом
+		alt приоритет входящей заявки выше
+			ptk			<-- buffer:		Подтверждение замены\nзаявки в очереди
+			&				<-- ptk:			Уведомление источника\nв отказе обработки заявки
+		else приоритет входящей заявки ниже
+			ptk			<-- buffer--:	Отказ в постановке
+			&source	<-- ptk--:		Отказ в обработке заявки
+		end
+	end
+
+	loop обработка заявок
+		buffer		<-	worker++:		Запрос пакета заявок
+		buffer		->	buffer:			Поиск приоритетного пакета
+		buffer		-->	worker--++:	Возврат пакета заявок
+		worker		-> worker:			Обработка заявок из пакета
+		||80||
+		worker		-> db:					Запись результата обработки
+		ptk				<-- worker--:		Закрытие заявки
+		&source		<-- ptk:				Уведомление о выполнении\nзаявки
+	end
+@enduml
