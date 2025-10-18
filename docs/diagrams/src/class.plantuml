@@ -1,85 +1,85 @@
 @startuml class-diagram
-class ApplicationSource {
-	-id: string
-	-priority: Priority
-	-name: string
-	+string getId()
-	+string getName()
-	+Priority getPriority()
-	+void setPriority(Priority priority)
-}
+	class ApplicationSource {
+		-id: string
+		-priority: Priority
+		-name: string
+		+string getId()
+		+string getName()
+		+Priority getPriority()
+		+void setPriority(Priority priority)
+	}
 
-class Application {
-	-id: string
-	-status: ApplicationStatus
-	-data: string
-	-createdAt: DateTime
-	+string getId()
-	+DateTime getCreationDate()
-	+void updateStatus()
-	+void setData()
-}
+	class Application {
+		-id: string
+		-status: ApplicationStatus
+		-data: string
+		-createdAt: DateTime
+		+string getId()
+		+DateTime getCreationDate()
+		+void updateStatus()
+		+void setData()
+	}
 
-class ApplicationPacket {
-	-id: string
-	-source: ApplicationSource
-	-applications: List<Application>
-	+string getId()
-	+ApplicationSource getSource()
-	+List<Application> getApplications()
-	+Application getOldestApplication()
-}
+	class ApplicationPacket {
+		-id: string
+		-source: ApplicationSource
+		-applications: List<Application>
+		+string getId()
+		+ApplicationSource getSource()
+		+List<Application> getApplications()
+		+Application getOldestApplication()
+	}
 
-class Buffer {
-	-size: int
-	-maxSize: int
-	-packets: List<ApplicationPacket>
-	+void addPacket(ApplicationPacket packet)
-	+void removePacket()
-	+ApplicationPacket getPacket()
-	+bool isFull()
-	+void addPacket()
-	-ApplicationPacket getLowestPriority()
-}
+	class Buffer {
+		-size: int
+		-maxSize: int
+		-packets: List<ApplicationPacket>
+		+void addPacket(ApplicationPacket packet)
+		+void removePacket()
+		+ApplicationPacket getPacket()
+		+bool isFull()
+		+void addPacket()
+		-ApplicationPacket getLowestPriority()
+	}
 
-class Dispatcher {
-	-buffer: Buffer
-	+void writeToBuffer(ApplicationPacket packet)
-	+void closePacket(ApplicationPacket packet)
-}
+	class Dispatcher {
+		-buffer: Buffer
+		+void writeToBuffer(ApplicationPacket packet)
+		+void closePacket(ApplicationPacket packet)
+	}
 
-class Operator {
-	-id: string
-	-isBusy: bool
-	-activePacket: ApplicationPacket
-	+void processPacket()
-}
+	class Operator {
+		-id: string
+		-isBusy: bool
+		-activePacket: ApplicationPacket
+		+void processPacket()
+	}
 
-enum Priority {
-	LOW = 0
-	MEDIUM = 10
-	HIGH = 20
-	CRITICAL = 100
-}
+	enum Priority {
+		LOW = 0
+		MEDIUM = 10
+		HIGH = 20
+		CRITICAL = 100
+	}
 
-enum ApplicationStatus {
-	NEW = 0
-	BUFFERED = 10
-	PROCESSING = 20
-	PROCESSED = 30
-	REJECTED = 100
-}
+	enum ApplicationStatus {
+		NEW = 0
+		BUFFERED = 10
+		PROCESSING = 20
+		PROCESSED = 30
+		REJECTED = 100
+	}
 
-ApplicationSource --> Priority
-Application --> ApplicationStatus
-ApplicationPacket --> ApplicationSource
-ApplicationPacket  --* "0..*" Application
-Operator --o "0..1" ApplicationPacket: Обрабатывает заявки из пакета\nprocessPacket()
-Dispatcher --* "1..1" Buffer: Заполняет буфер по критериям\nwriteToBuffer()
-Buffer --o "0..*" ApplicationPacket
+	ApplicationSource --> Priority
+	Application --> ApplicationStatus
+	ApplicationPacket --> ApplicationSource
+	ApplicationPacket  --* "0..*" Application
+	Operator --o "0..1" ApplicationPacket: Обрабатывает заявки из пакета\nprocessPacket()
+	Dispatcher --* "1..1" Buffer: Заполняет буфер по критериям\nwriteToBuffer()
+	Buffer --o "0..*" ApplicationPacket
 
-Operator ..> Buffer: Запрашивает заявку\ngetPacket()
+	Operator ..> Buffer: Запрашивает заявку\ngetPacket()
 
-hide empty members
-left to right direction
+	hide empty members
+	left to right direction
 @enduml
