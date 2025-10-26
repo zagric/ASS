@@ -11,23 +11,16 @@
 #  The above copyright notice and this permission notice shall be included in all
 #  copies or substantial portions of the Software.
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+from abc import ABC
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import ClassVar
+from uuid import UUID, uuid4
 
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Any
 
+@dataclass
+class BaseEvent(ABC):
+    event_title: ClassVar[str]
 
-@dataclass(frozen=True)
-class BaseValueObject[VT: Any](ABC):
-    value: VT
-
-    def __post_init__(self) -> None:
-        self.validate()
-
-    @abstractmethod
-    def validate(self) -> None:
-        ...
-
-    @abstractmethod
-    def as_generic_type(self) -> VT:
-        ...
+    event_id: UUID = field(default_factory=uuid4, kw_only=True)
+    occurred_at: datetime = field(default_factory=datetime.now, kw_only=True)

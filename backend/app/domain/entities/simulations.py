@@ -11,23 +11,26 @@
 #  The above copyright notice and this permission notice shall be included in all
 #  copies or substantial portions of the Software.
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any
+
+from domain.entities.base import BaseEntity
+from domain.events.simulations import NewSimulationCreatedEvent
+from domain.values.simulations import BufferSize, EntitiesCount
 
 
-@dataclass(frozen=True)
-class BaseValueObject[VT: Any](ABC):
-    value: VT
+@dataclass(eq=False)
+class Simulation(BaseEntity):
+    producers_count: EntitiesCount
+    consumers_count: EntitiesCount
+    buffer_size: BufferSize
 
-    def __post_init__(self) -> None:
-        self.validate()
-
-    @abstractmethod
-    def validate(self) -> None:
-        ...
-
-    @abstractmethod
-    def as_generic_type(self) -> VT:
-        ...
+    @classmethod
+    def create_simulation(cls, prod_count: EntitiesCount, cons_count: EntitiesCount, buff_size: BufferSize) -> "Simulation":
+        new_simulation = cls(
+            producers_count=prod_count,
+            consumers_count=cons_count,
+            buffer_size=buff_size,
+        )
+        new_simulation.register_event(NewSimulationCreatedEvent(simulation_oid=new_simulation.oid))
+        
+        return new_simulation
