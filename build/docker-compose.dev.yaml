@@ -1,0 +1,10 @@
+services:
+  backend:
+    build:
+      context: "../backend/"
+      target: dev
+    ports:
+      - "${API_PORT:-8000}:8000"
+      - "${DEBUG_PORT:-5678}:5678"
+    volumes:
+      - "../backend/app/:/app/app/"

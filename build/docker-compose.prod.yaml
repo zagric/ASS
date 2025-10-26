@@ -1,0 +1,8 @@
+services:
+  backend:
+    container_name: ass-api
+    build:
+      context: "../backend/"
+      target: runtime
+    ports:
+      - "${API_PORT:-8000}:8000"
