@@ -1,7 +1,6 @@
 DC = docker compose
 APP = docker-compose.prod.yaml
 APP_DEV = docker-compose.dev.yaml
-ENV = --env-file .env
 
 .PHONY: app-dev
 app-dev:

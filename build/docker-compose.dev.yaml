@@ -8,3 +8,5 @@ services:
       - "${DEBUG_PORT:-5678}:5678"
     volumes:
       - "../backend/app/:/app/app/"
+    env_file:
+      - ../backend/.env

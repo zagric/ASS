@@ -8,6 +8,7 @@ readme = "README.md"
 dependencies = [
     "fastapi (>=0.120.0,<0.121.0)",
     "ipython (>=9.6.0,<10.0.0)",
+    "punq>=0.7.0",
     "uvicorn (>=0.38.0,<0.39.0)",
 ]
 
@@ -25,6 +26,7 @@ dev = [
     "pytest-asyncio>=1.2.0,<2",
     "faker>=37.12.0,<38",
     "commitizen>=4.9.1",
+    "httpx>=0.28.1",
 ]
 
 [tool.uv]
@@ -77,11 +79,14 @@ ignore = [
     "D100",
     "D101",
     "D102",
+    "D103",
     "D105",
 ]
-fixable = [
-    "I",
-]
+fixable = ["ALL"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402"]
+"app/tests/*" = ["S101", "SLF001", "ANN201"]
 
 [tool.ruff.format]
 quote-style = "double"

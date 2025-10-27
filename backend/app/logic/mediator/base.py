@@ -1,15 +1,5 @@
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #  Copyright (c) 2025 Aleksandr Zagrivnyy
-# 
-#  Permission is hereby granted, free of charge, to any person obtaining a copy
-#  of this software and associated documentation files (the "Software"), to deal
-#  in the Software without restriction, including without limitation the rights
-#  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-#  copies of the Software, and to permit persons to whom the Software is
-#  furnished to do so, subject to the following conditions:
-# 
-#  The above copyright notice and this permission notice shall be included in all
-#  copies or substantial portions of the Software.
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 from collections import defaultdict
 from collections.abc import Iterable
@@ -23,21 +13,42 @@ from logic.exceptions.mediator import CommandHandlersNotRegisteredError
 
 
 @dataclass(eq=False)
-class Mediator[ET: BaseEvent, ER: Any, CT: BaseCommand, CR: Any]:
-    events_map: dict[ET, EventHandler] = field(
+class Mediator[ET: type(BaseEvent), ER: Any, CT: type(BaseCommand), CR: Any]:
+    events_map: dict[ET, list[EventHandler]] = field(
         default_factory=lambda: defaultdict(list),
         kw_only=True,
     )
-    commands_map: dict[CT, CommandHandler] = field(
+    commands_map: dict[CT, list[CommandHandler]] = field(
         default_factory=lambda: defaultdict(list),
         kw_only=True,
     )
 
-    def register_event(self, event: ET, event_handlers: Iterable[EventHandler[ET, ER]]) -> None:
+    def register_event(
+        self,
+        event: ET,
+        event_handlers: Iterable[EventHandler[ET, ER]],
+    ) -> None:
         self.events_map[event].extend(event_handlers)
 
-    def register_command(self, command: CT, commands_handlers: Iterable[CommandHandler[CT, CR]]) -> None:
+    def register_command(
+        self,
+        command: CT,
+        commands_handlers: Iterable[CommandHandler[CT, CR]],
+    ) -> None:
         self.commands_map[command].extend(commands_handlers)
+
+    async def publish(self, events: Iterable[BaseEvent]) -> Iterable[ER]:
+        result = []
+
+        for event in events:
+            event_type = event.__class__
+            handlers: Iterable[EventHandler] = self.events_map[event_type]
+            if not handlers:
+                raise CommandHandlersNotRegisteredError(event_type)
+
+            result.extend([await handler.handle(event) for handler in handlers])
+
+        return result
 
     async def handle_command(self, command: BaseCommand) -> Iterable[CR]:
         command_type = command.__class__

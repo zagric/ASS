@@ -13,7 +13,7 @@ COPY uv.lock pyproject.toml . ./
 RUN uv sync
 
 EXPOSE 8000 5678
-ENTRYPOINT ["uvicorn", "--factory", "app.application.api.main:create_app", "--timeout-graceful-shutdown", "2", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+ENTRYPOINT ["uvicorn", "--factory", "application.api.main:create_app", "--timeout-graceful-shutdown", "2", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 
 FROM base AS builder
