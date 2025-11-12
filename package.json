@@ -1,0 +1,36 @@
+{
+  "name": "@zagric/ass-monorepo",
+  "private": true,
+  "engines": {
+    "node": ">=22.19",
+    "pnpm": ">=9.12.2"
+  },
+  "packageManager": "pnpm@9.12.2",
+  "license": "MIT",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "libs/*"
+  ],
+  "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "@nx/docker": "22.0.2",
+    "@nxlv/python": "^21.2.0",
+    "cz-git": "^1.12.0",
+    "czg": "^1.12.0",
+    "husky": "^9.1.7",
+    "inquirer": "9",
+    "nx": "22.0.2"
+  },
+  "scripts": {
+    "cz": "czg",
+    "prepare": "husky",
+    "lint": "echo \"No lint scripts\""
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-git"
+    }
+  }
+}

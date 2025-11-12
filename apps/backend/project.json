@@ -1,0 +1,36 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "backend",
+  "projectType": "application",
+  "sourceRoot": "apps/backend/app",
+  "targets": {
+    "build": {
+      "executor": "@nxlv/python:build",
+      "options": {
+        "outputPath": "dist/apps/backend",
+        "publish": false
+      }
+    },
+    "sync": {
+      "executor": "@nxlv/python:sync",
+      "options": {}
+    },
+    "add": {
+      "executor": "@nxlv/python:add",
+      "options": {}
+    },
+    "run": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "uv run",
+        "cwd": "apps/backend"
+      }
+    }
+  },
+  "tags": ["python", "fastapi", "backend"],
+  "release": {
+    "version": {
+      "versionActions": "@nxlv/python/src/release/version-actions"
+    }
+  }
+}
