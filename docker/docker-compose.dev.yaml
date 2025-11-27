@@ -4,15 +4,15 @@ services:
       db:
         condition: service_healthy
     build:
-      context: "../backend/"
+      context: "../apps/backend/"
       target: dev
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:
-      - "../backend/app/:/app/app/"
+      - "../apps/backend/app/:/app/app/"
     restart: unless-stopped
     env_file:
-      - ../backend/.env
+      - ../apps/backend/.env
 
   db:
     image: postgres:18-alpine
@@ -30,7 +30,7 @@ services:
       retries: 5
     restart: unless-stopped
     env_file:
-      - ../backend/.env
+      - ../apps/backend/.env
 
 volumes:
   db_data:
