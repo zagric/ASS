@@ -12,7 +12,7 @@ from application.api.simulations.handlers import router as simulation_router
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:  # noqa: ARG001
     await init_db()
 
     yield

@@ -7,7 +7,7 @@ from typing import Any
 
 
 @dataclass(frozen=True)
-class BaseCommand(ABC): ...
+class BaseCommand(ABC): ...  # noqa: B024
 
 
 @dataclass(frozen=True)

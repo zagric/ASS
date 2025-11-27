@@ -28,12 +28,12 @@ class BaseSQLRepository[T: type(SQLModel)](ABC):
             finally:
                 await session.close()
 
-    def _construct_get_stmt(self, id: int) -> Select:
-        return select(self._model).where(self._model.id == id)
+    def _construct_get_stmt(self, oid: int) -> Select:
+        return select(self._model).where(self._model.id == oid)
 
-    async def get_by_id(self, id: int) -> T | None:
+    async def get_by_id(self, oid: int) -> T | None:
         async with self._get_session() as session:
-            stmt = self._construct_get_stmt(id)
+            stmt = self._construct_get_stmt(oid)
             result = await session.exec(stmt)
             return result.first()
 
@@ -60,8 +60,8 @@ class BaseSQLRepository[T: type(SQLModel)](ABC):
             await session.refresh(record)
             return record
 
-    async def delete(self, id: int) -> None:
-        record = self.get_by_id(id)
+    async def delete(self, oid: int) -> None:
+        record = self.get_by_id(oid)
         if record is not None:
             async with self._get_session() as session:
                 await session.delete(record)

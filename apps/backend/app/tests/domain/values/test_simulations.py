@@ -3,8 +3,6 @@
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 from datetime import UTC, datetime
 
-import pytest
-
 from domain.entities.simulations import Simulation
 from domain.exceptions.simulations import (
     BufferSizeMustBePositiveError,
@@ -13,6 +11,8 @@ from domain.exceptions.simulations import (
     EntitiesCountTooLongError,
 )
 from domain.values.simulations import BufferSize, EntitiesCount
+
+import pytest
 
 
 def test_create_buffer_failure():

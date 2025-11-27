@@ -18,5 +18,5 @@ class SimulationModel(SQLModel, table=True):
     buffer_size: int = Field(sa_type=SmallInteger, default=0)
 
     created_at: datetime = Field(
-        default=datetime.now(tz=UTC), sa_type=DATETIME_TIMEZONE
+        default=datetime.now(tz=UTC), sa_type=DATETIME_TIMEZONE,
     )

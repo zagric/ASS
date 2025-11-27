@@ -40,7 +40,6 @@ def _init_container() -> Container:
     engine: AsyncEngine = container.resolve(AsyncEngine)
 
     def create_session_factory() -> async_sessionmaker[AsyncSession]:
-        print("Creating session factory")
         return async_sessionmaker(
             engine,
             expire_on_commit=False,

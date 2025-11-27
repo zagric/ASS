@@ -2,11 +2,12 @@
 #  Copyright (c) 2025 Aleksandr Zagrivnyy
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 from punq import Container
-import pytest
 
 from infrastructure.repositories.simulations.base import BaseSimulationRepository
 from logic.mediator.base import Mediator
 from tests.fixtures import init_dummy_container
+
+import pytest
 
 
 @pytest.fixture

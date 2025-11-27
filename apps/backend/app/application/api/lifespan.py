@@ -18,5 +18,5 @@ async def init_db() -> None:
     engine: AsyncEngine = container.resolve(AsyncEngine)
 
     async with engine.begin() as conn:
-        # await conn.run_sync(SQLModel.metadata.drop_all)
+        # await conn.run_sync(SQLModel.metadata.drop_all)  # noqa: ERA001
         await conn.run_sync(SQLModel.metadata.create_all)

@@ -11,6 +11,12 @@
         "publish": false
       }
     },
+    "lint": {
+      "executor": "@nxlv/python:ruff-check",
+      "options": {
+        "lintFilePatterns": ["app"]
+      }
+    },
     "sync": {
       "executor": "@nxlv/python:sync",
       "options": {}

@@ -2,11 +2,12 @@
 #  Copyright (c) 2025 Aleksandr Zagrivnyy
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 from faker import Faker
-import pytest
 
 from infrastructure.repositories.simulations.base import BaseSimulationRepository
 from logic.commands.simulations import CreateSimulationCommand
 from logic.mediator.base import Mediator
+
+import pytest
 
 
 @pytest.mark.asyncio
