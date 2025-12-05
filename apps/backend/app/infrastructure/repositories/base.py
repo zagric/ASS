@@ -47,14 +47,14 @@ class BaseSQLRepository[T: type(SQLModel)](ABC):
             return results.all()
 
     async def add(self, record: T) -> T:
-        async with self._get_session() as session:
+        async with self._get_session() as session, session.begin():
             session.add(record)
             await session.flush()
             await session.refresh(record)
             return record
 
     async def update(self, record: T) -> T:
-        async with self._get_session() as session:
+        async with self._get_session() as session, session.begin():
             session.add(record)
             await session.flush()
             await session.refresh(record)
@@ -63,6 +63,6 @@ class BaseSQLRepository[T: type(SQLModel)](ABC):
     async def delete(self, oid: int) -> None:
         record = self.get_by_id(oid)
         if record is not None:
-            async with self._get_session() as session:
+            async with self._get_session() as session, session.begin():
                 await session.delete(record)
                 await session.flush()
