@@ -10,6 +10,10 @@ app-dev:
 app-dev-logs:
 	${DC} -f ${APP_DEV} logs -f
 
+.PHONY: app-dev-apps-logs
+app-dev-apps-logs:
+	${DC} -f ${APP_DEV} logs backend -f
+
 .PHONY: down-dev
 down-dev:
 	${DC} -f ${APP_DEV} down
