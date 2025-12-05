@@ -19,6 +19,7 @@ from logic.commands.simulations import (
     CreateSimulationCommandHandler,
 )
 from logic.mediator.base import Mediator
+from logic.mediator.event import EventMediator
 from settings.config import Config
 
 
@@ -57,17 +58,36 @@ def _init_container() -> Container:
         factory=init_simulation_repository,
         scope=Scope.singleton,
     )
-    container.register(CreateSimulationCommandHandler)
 
+    # Query handlers
+
+    # Message brokers
+
+    # Mediator
     def init_mediator() -> Mediator:
         mediator = Mediator()
+
+        # Command handlers
+        create_simulation_handler = CreateSimulationCommandHandler(
+            _mediator=mediator,
+            simulation_repository=container.resolve(BaseSimulationRepository),
+        )
+
+        # Event handlers
+
+        # Commands
         mediator.register_command(
             CreateSimulationCommand,
-            [container.resolve(CreateSimulationCommandHandler)],
+            [create_simulation_handler],
         )
+
+        # Events
+
+        # Queries
 
         return mediator
 
     container.register(Mediator, factory=init_mediator)
+    container.register(EventMediator, factory=init_mediator)
 
     return container
