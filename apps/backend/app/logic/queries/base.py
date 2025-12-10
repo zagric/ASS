@@ -5,15 +5,14 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
 
-from domain.events.base import BaseEvent
-from infrastructure.message_brokers.base import BaseMessageBroker
+
+@dataclass(frozen=True)
+class BaseQuery(ABC):  # noqa: B024
+    ...
 
 
-@dataclass
-class EventHandler[ET: BaseEvent, ER: Any](ABC):
-    message_broker: BaseMessageBroker
-    broker_topic: str | None = None
-
+@dataclass(frozen=True)
+class BaseQueryHandler[QT: BaseQuery, QR: Any](ABC):
     @abstractmethod
-    def handle(self, event: ET) -> ER:
+    async def handle(self, query: QT) -> QR:
         ...

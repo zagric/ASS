@@ -1,10 +1,8 @@
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #  Copyright (c) 2025 Aleksandr Zagrivnyy
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-from pydantic import Field
-from pydantic_settings import BaseSettings
+from pydantic import BaseModel
 
 
-class Config(BaseSettings):
-    pg_connection_uri: str = Field(alias="PG_CONNECTION_URI")
-    kafka_url: str = Field(alias="KAFKA_URL")
+class HealthCheckResponseSchema(BaseModel):
+    status: str = "ok"
