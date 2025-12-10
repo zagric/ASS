@@ -1,22 +1,16 @@
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #  Copyright (c) 2025 Aleksandr Zagrivnyy
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-#
-#  Permission is hereby granted, free of charge, to any person obtaining a copy
-#  of this software and associated documentation files (the "Software"), to deal
-#  in the Software without restriction, including without limitation the rights
-#  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-#  copies of the Software, and to permit persons to whom the Software is
-#  furnished to do so, subject to the following conditions:
-#
 from dataclasses import dataclass
 
 from domain.exceptions.simulations import (
+    BufferSizeMustBeMoreThanZeroError,
     BufferSizeMustBePositiveError,
     BufferSizeTooLongError,
+    DurationMustBeInIntervalError,
     EntitiesCountMustBePositiveError,
     EntitiesCountTooLongError,
+    RequestRateMustBeInIntervalError,
 )
 from domain.values.base import BaseValueObject
 
@@ -41,6 +35,9 @@ class BufferSize(BaseValueObject[int]):
     _max_length: int = 10_000
 
     def validate(self) -> None:
+        if self.value == 0:
+            raise BufferSizeMustBeMoreThanZeroError
+
         if self.value < 0:
             raise BufferSizeMustBePositiveError(self.value)
 
@@ -49,3 +46,28 @@ class BufferSize(BaseValueObject[int]):
 
     def as_generic_type(self) -> int:
         return int(self.value)
+
+
+@dataclass(frozen=True)
+class Duration(BaseValueObject[int]):
+    _max_length: int = 3_600
+
+    def validate(self) -> None:
+        if self.value <= 0 or self.value > self._max_length:
+            raise DurationMustBeInIntervalError(self._max_length)
+
+    def as_generic_type(self) -> int:
+        return int(self.value)
+
+
+@dataclass(frozen=True)
+class RequestRate(BaseValueObject[float]):
+    _min_length: float = 0.5
+    _max_length: float = 5
+
+    def validate(self) -> None:
+        if self.value < self._min_length or self.value > self._max_length:
+            raise RequestRateMustBeInIntervalError(self._min_length, self._max_length)
+
+    def as_generic_type(self) -> float:
+        return float(self.value)

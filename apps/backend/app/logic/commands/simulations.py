@@ -4,7 +4,7 @@
 from dataclasses import dataclass
 
 from domain.entities.simulations import Simulation
-from domain.values.simulations import BufferSize, EntitiesCount
+from domain.values.simulations import BufferSize, Duration, EntitiesCount, RequestRate
 from infrastructure.repositories.simulations.base import BaseSimulationRepository
 from logic.commands.base import BaseCommand, CommandHandler
 
@@ -14,6 +14,8 @@ class CreateSimulationCommand(BaseCommand):
     producers_count: int
     consumers_count: int
     buffer_size: int
+    simulation_duration: int
+    request_rate: float
 
 
 @dataclass(frozen=True)
@@ -26,13 +28,18 @@ class CreateSimulationCommandHandler(
         producers_count = EntitiesCount(command.producers_count)
         consumers_count = EntitiesCount(command.consumers_count)
         buffer_size = BufferSize(command.buffer_size)
+        simulation_duration = Duration(command.simulation_duration)
+        request_rate = RequestRate(command.request_rate)
 
         new_simulation = Simulation.create_simulation(
             producers_count,
             consumers_count,
             buffer_size,
+            simulation_duration,
+            request_rate,
         )
 
         await self.simulation_repository.add_simulation(new_simulation)
+        await self._mediator.publish(new_simulation.pull_events())
 
         return new_simulation

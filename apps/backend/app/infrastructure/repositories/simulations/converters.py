@@ -2,7 +2,7 @@
 #  Copyright (c) 2025 Aleksandr Zagrivnyy
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 from domain.entities.simulations import Simulation
-from domain.values.simulations import BufferSize, EntitiesCount
+from domain.values.simulations import BufferSize, Duration, EntitiesCount, RequestRate
 from infrastructure.database.models.simulations import SimulationModel
 
 
@@ -13,6 +13,8 @@ def convert_simulation_entity_to_model(simulation: Simulation) -> SimulationMode
         consumers_count=simulation.consumers_count.value,
         buffer_size=simulation.buffer_size.value,
         created_at=simulation.created_at,
+        simulation_duration=simulation.simulation_duration.value,
+        request_rate=simulation.request_rate.value,
     )
 
 
@@ -23,4 +25,6 @@ def convert_model_to_simulation_entity(model: SimulationModel) -> Simulation:
         consumers_count=EntitiesCount(model.consumers_count),
         buffer_size=BufferSize(model.buffer_size),
         created_at=model.created_at,
+        simulation_duration=Duration(model.simulation_duration),
+        request_rate=RequestRate(model.request_rate),
     )

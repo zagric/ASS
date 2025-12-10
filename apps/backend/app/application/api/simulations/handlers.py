@@ -22,9 +22,9 @@ router = APIRouter(tags=["Simulation"])
 
 @router.post(
     "",
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_202_ACCEPTED,
     responses={
-        status.HTTP_201_CREATED: {"model": CreateSimulationResponseSchema},
+        status.HTTP_202_ACCEPTED: {"model": CreateSimulationResponseSchema},
         status.HTTP_400_BAD_REQUEST: {"model": ErrorSchema},
     },
     summary="Create a new simulation",
@@ -42,6 +42,8 @@ async def create_simulation_handler(
                 producers_count=schema.producers_count,
                 consumers_count=schema.consumers_count,
                 buffer_size=schema.buffer_size,
+                simulation_duration=schema.simulation_duration,
+                request_rate=schema.request_rate,
             ),
         )
     except ApplicationError as error:

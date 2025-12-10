@@ -12,3 +12,8 @@ class NewSimulationCreatedEvent(BaseEvent):
     event_title: ClassVar[str] = "New simulation created"
 
     simulation_oid: str
+    producers_count: int
+    consumers_count: int
+    buffer_size: int
+    simulation_duration: int
+    request_rate: float
