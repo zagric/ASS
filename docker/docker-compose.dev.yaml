@@ -40,6 +40,9 @@ services:
       context: "../apps/simulator/"
     # ports:
     #   - "${SIMULATOR_PORT:-8080}:8080"
+    deploy:
+      mode: replicated
+      replicas: 2
     volumes:
       - "../apps/simulator/:/app"
 

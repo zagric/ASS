@@ -1,39 +1,84 @@
-package simulation
+package simulator
 
 import (
 	"fmt"
 	"math"
 	"math/rand"
+	"simulator/internal/models"
 	"simulator/pkg/random"
-	"strings"
 	"time"
 )
 
-type JsonTime struct {
-	time.Time
+type RequestStatus int
+
+const (
+	Created RequestStatus = iota
+	Buffered
+	Processing
+	Finished
+	Rejected
+)
+
+type SimulationEngine struct {
+	Config            models.Simulation
+	StartedAt         time.Time
+	Buffer            Buffer
+	Dispatchers       []Dispatcher
+	Requests          []*Request
+	Stats             Statistics
+	CurrentTime       time.Duration
+	CurrentDispatcher int
+	Active            bool
+	nextRequest       []time.Time
+	nextReqID         int
+	StepSnapshot      StepSnapshot
 }
 
-const layout = "2006-01-02T15:04:05.999999"
-
-func (jt *JsonTime) UnmarshalJSON(b []byte) (err error) {
-	s := strings.Trim(string(b), `"`)
-	if s == "null" {
-		return
-	}
-	jt.Time, err = time.Parse(layout, s)
-	return
+type Dispatcher struct {
+	ID           int
+	IsBusy       bool
+	CurrentReq   *Request
+	ServiceStart time.Time
+	ServiceTime  time.Duration
 }
 
-func (jt JsonTime) MarshalJSON() ([]byte, error) {
-	if jt.Time.IsZero() {
-		return nil, nil
-	}
-	return []byte(fmt.Sprintf(`"%s"`, jt.Time.Format(layout))), nil
+type Request struct {
+	ID          int
+	Source      int
+	GeneratedAt time.Time
+	Status      RequestStatus
 }
 
-func NewEngine(config SimulationConfig) *SimulationEngine {
+type Buffer struct {
+	Size  int
+	Slots []*Request
+	Count int
+}
+
+type Statistics struct {
+	TotalRequests       int
+	Processed           int
+	Rejected            int
+	TotalWaitTime       time.Duration
+	TotalServiceTime    time.Duration
+	DispatchersBusyTime []time.Duration
+}
+
+type StepSnapshot struct {
+	IsChanged           bool
+	GeneratedRequests   []*Request
+	RejectedRequests    []*Request
+	FinishedRequests    []*Request
+	BufferState         []*Request
+	Dispatchers         []Dispatcher
+	RejectionPercentage int
+	Timestamp           time.Duration
+}
+
+func NewEngine(config models.Simulation) *SimulationEngine {
 	engine := &SimulationEngine{
-		Config: config,
+		Config:    config,
+		StartedAt: time.Now(),
 		Buffer: Buffer{
 			Size:  config.BufferSize,
 			Slots: make([]*Request, config.BufferSize),
@@ -56,7 +101,7 @@ func NewEngine(config SimulationConfig) *SimulationEngine {
 	return engine
 }
 
-func (e *SimulationEngine) Run() {
+func (e *SimulationEngine) Run() *Statistics {
 	endTime := e.Config.SimulationDuration * time.Second
 	const simulationStep = 1000 * time.Microsecond
 	ticker := time.NewTicker(simulationStep)
@@ -64,17 +109,32 @@ func (e *SimulationEngine) Run() {
 
 	for e.CurrentTime < endTime {
 		<-ticker.C
-		e.step()
+		snapshot := e.step()
+		if snapshot.IsChanged {
+			fmt.Println(snapshot)
+		}
 		e.CurrentTime += simulationStep
+		e.StepSnapshot = StepSnapshot{}
 	}
 
-	fmt.Println(e.Stats)
+	return &e.Stats
 }
 
-func (e *SimulationEngine) step() {
+func (e *SimulationEngine) step() StepSnapshot {
 	e.generateRequests()
 	e.processRequests()
 	e.processDispatchers()
+
+	if e.Stats.TotalRequests == 0 {
+		e.StepSnapshot.RejectionPercentage = 0
+	} else {
+		e.StepSnapshot.RejectionPercentage = e.Stats.Rejected * 100 / e.Stats.TotalRequests
+	}
+	e.StepSnapshot.Timestamp = time.Since(e.StartedAt)
+	e.StepSnapshot.BufferState = e.Buffer.Slots
+	e.StepSnapshot.Dispatchers = e.Dispatchers
+
+	return e.StepSnapshot
 }
 
 func (e *SimulationEngine) initRequestGenerator() {
@@ -99,12 +159,15 @@ func (e *SimulationEngine) generateRequests() {
 				GeneratedAt: now,
 			}
 			e.nextReqID++
+			e.StepSnapshot.GeneratedRequests = append(e.StepSnapshot.GeneratedRequests, req)
+			e.StepSnapshot.IsChanged = true
 
 			if e.addToBuffer(req) {
 				req.Status = Buffered
 				e.Requests = append(e.Requests, req)
 			} else {
 				req.Status = Rejected
+				e.StepSnapshot.RejectedRequests = append(e.StepSnapshot.RejectedRequests, req)
 				e.Requests = append(e.Requests, req)
 				e.Stats.Rejected++
 			}
@@ -137,6 +200,9 @@ func (e *SimulationEngine) addToBuffer(req *Request) bool {
 
 	if minIndex != -1 {
 		e.Buffer.Slots[minIndex].Status = Rejected
+
+		e.StepSnapshot.RejectedRequests = append(e.StepSnapshot.RejectedRequests, e.Buffer.Slots[minIndex])
+
 		e.Buffer.Slots[minIndex] = req
 		e.Stats.Rejected++
 		return true
@@ -183,6 +249,7 @@ func (e *SimulationEngine) assignToDispatcher(req *Request) bool {
 
 			req.Status = Processing
 
+			e.Stats.TotalWaitTime += time.Since(req.GeneratedAt)
 			e.CurrentDispatcher = (idx + 1) % len(e.Dispatchers)
 
 			return true
@@ -198,7 +265,11 @@ func (e *SimulationEngine) processDispatchers() {
 			if time.Since(e.Dispatchers[i].ServiceStart) >= e.Dispatchers[i].ServiceTime {
 				e.Dispatchers[i].IsBusy = false
 				e.Dispatchers[i].CurrentReq.Status = Finished
+				e.StepSnapshot.FinishedRequests = append(e.StepSnapshot.FinishedRequests, e.Dispatchers[i].CurrentReq)
+				e.StepSnapshot.IsChanged = true
 				e.Dispatchers[i].CurrentReq = nil
+
+				e.Stats.TotalServiceTime += time.Since(e.Dispatchers[i].ServiceStart)
 
 				e.Stats.Processed++
 			} else {

@@ -2,21 +2,23 @@ package kafka
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"simulator/internal/config"
-	"simulator/internal/simulation"
+	"simulator/internal/models"
 	"time"
 
 	"github.com/segmentio/kafka-go"
 )
 
 type Consumer struct {
-	reader *kafka.Reader
-	config *config.Config
+	reader         *kafka.Reader
+	simulationChan chan models.Simulation
+	cancelFunc     context.CancelFunc
+	done           chan struct{}
+	config         *config.Config
 }
 
-func NewConsumer(cfg *config.Config) (*Consumer, error) {
+func NewConsumer(cfg *config.Config) *Consumer {
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:        cfg.KafkaBrokers,
 		Topic:          cfg.KafkaSimConfigTopic,
@@ -25,55 +27,62 @@ func NewConsumer(cfg *config.Config) (*Consumer, error) {
 	})
 
 	return &Consumer{
-		reader: reader,
-		config: cfg,
-	}, nil
+		reader:         reader,
+		simulationChan: make(chan models.Simulation, cfg.NumberOfWorkers),
+		done:           make(chan struct{}),
+		config:         cfg,
+	}
 }
 
-func (c *Consumer) Start(ctx context.Context) error {
-	log.Printf("Consumer started")
+func (c *Consumer) Start(ctx context.Context) (<-chan models.Simulation, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	c.cancelFunc = cancel
 
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		default:
-			msg, err := c.reader.ReadMessage(ctx)
-			if err != nil {
-				continue
+	go func() {
+		defer close(c.done)
+		defer close(c.simulationChan)
+
+		log.Printf("Starting Kafka consumer for topic: %s\n", c.config.KafkaSimConfigTopic)
+
+		for {
+			select {
+			case <-ctx.Done():
+				log.Println("Kafka consumer shutting down")
+				return
+			default:
+				msg, err := c.reader.ReadMessage(ctx)
+				if err != nil {
+					if ctx.Err() == context.Canceled {
+						return
+					}
+					log.Printf("Error reading message: %v", err)
+					time.Sleep(time.Second)
+					continue
+				}
+
+				sim, err := models.SimulationFromJSON(msg.Value)
+				if err != nil {
+					log.Printf("Error unmarshaling simulation: %v", err)
+					continue
+				}
+
+				select {
+				case c.simulationChan <- *sim:
+					// Message successfully sent to channel
+				case <-ctx.Done():
+					return
+				}
+
+				// c.processMessage(msg.Value)
 			}
-
-			c.processMessage(msg.Value)
 		}
-	}
+	}()
+
+	return c.simulationChan, nil
 }
 
-func (c *Consumer) processMessage(data []byte) {
-	var simMsg simulation.SimulationConfig
-	if err := json.Unmarshal(data, &simMsg); err != nil {
-		log.Printf("Error parsing message: %v", err)
-		return
-	}
-
-	simConfig := simulation.SimulationConfig{
-		EventID:            simMsg.EventID,
-		OccurredAt:         simMsg.OccurredAt,
-		SimulationOID:      simMsg.SimulationOID,
-		SimulationDuration: simMsg.SimulationDuration,
-		RequestRate:        simMsg.RequestRate,
-		ProducerCount:      simMsg.ProducerCount,
-		ConsumersCount:     simMsg.ConsumersCount,
-		BufferSize:         simMsg.BufferSize,
-	}
-
-	engine := simulation.NewEngine(simConfig)
-	log.Printf("Message: %v", simMsg)
-	engine.Run()
-}
-
-func (c *Consumer) Close() error {
-	if c.reader != nil {
-		return c.reader.Close()
-	}
-	return nil
+func (c *Consumer) Stop() error {
+	c.cancelFunc()
+	<-c.done
+	return c.reader.Close()
 }
